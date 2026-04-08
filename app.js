@@ -1,6 +1,13 @@
 
 const MAD_LIB = getLongMadLib(); // You can try using both getShortMadLib() and getLongMadLib()
 
+const REGEX = {
+    word: /^[A-Za-z]+$/,
+    properNoun: /^[A-Z][A-Za-z]*$/,
+    adjective: /^[A-Za-z]*[yY]$/,
+    quote: /^(['"])(.+)\1$/
+};
+
 /**
  * This function is done for you.
  * This function is called when the page is initially loaded.
@@ -64,7 +71,20 @@ function generateLib() {
     resultDiv.innerHTML = "";
 
     let pBuilder = document.createElement("p"); 
-    pBuilder.innerText = "I should start building the madlib!";
+
+    MAD_LIB.text.forEach(segment => {
+        if (segment.segmentType === "static") {
+            pBuilder.innerText += segment.text;
+        }
+        else if (segment.segmentType === "fillable") {
+            let inputEl = document.getElementById(segment.id + "-input");
+            pBuilder.innerText += inputEl.value;
+        }
+        else if (segment.segmentType === "newline") {
+            resultDiv.appendChild(pBuilder);
+            pBuilder = document.createElement("p");
+        }
+    });
 
     resultDiv.appendChild(pBuilder);
 }
@@ -88,11 +108,41 @@ function validate() {
     // TODO: If any inputs are invalid, set their error text.
     //       After checking ALL inputs, return true/false if
     //       the entire form was valid or not.
+
+    //_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-_-
+
     for(let i = 0; i < MAD_LIB.fillers.length; i++) {
+
+
         let currLib = MAD_LIB.fillers[i];
         let currInputId = currLib.id + "-input";
         let currErrorTextId = currLib.id + "-error-text";
-        console.log(currLib, currInputId, currErrorTextId);        
+
+        let currInput = document.getElementById(currInputId);
+        let currErrorText = document.getElementById(currErrorTextId);
+        let value = currInput.value.trim();
+
+        let valid = REGEX[currLib.type].test(value);
+
+        // Set the proper error messages
+        if (!valid) {
+            currInput.classList.add("is-invalid");
+            isValid = false;
+
+            if (currLib.type === "word") {
+                currErrorText.innerText = "Please type 1 or more letters, without spaces or special characters.";
+            } else if (currLib.type === "properNoun") {
+                currErrorText.innerText = "Please type 1 or more letters, without special characters, starting with a capital letter.";
+            } else if (currLib.type === "adjective") {
+                currErrorText.innerText = "Please type 1 or more letters, without special characters, ending with a y.";
+            } else if (currLib.type === "quote") {
+                currErrorText.innerText = "Please type 1 or more characters between single or double quotes.";
+            }
+
+        } else {
+            currInput.classList.remove("is-invalid");
+            currErrorText.innerText = "";
+        }     
     }
 
     return isValid;
